@@ -19,7 +19,7 @@ EmbarcaFunky
 
 ### Usuários 
 
-Fãs de jogos de ritmo. Seria algo que mira no público familiar.
+Fãs de jogos de ritmo, que tenha o conhecimento tecninco para replicar nosso projeto.
 
 ### Software/Jogo 
 
@@ -31,6 +31,12 @@ Para o projeto, criaremos um controle para jogar o jogo StepMania. Stepmania é 
 O usuário quer ter uma nova experiência com um jogo familiar e criar conteúdo que pode ser interessante para outras pessoas.
 
 O usuário quer jogar um jogo de ritmo que tem 4 botões como input, com um controle feito para isto.
+
+Joao joga jogos de ritmo todo dia, ele adora DDR, clone hero,e recentemente descobriu StepMania, mas sentiu que nao tem um controle ideial para jogar, 
+com isso, joao procurou na internet ate achar o nosso projeto e replicou ele para ter o seu proprio controle. Sentiu que nossos 4 botoes estavam perfeitamente colocados, e que o joystick funcionava muito bem para controlar o mouse, nao sentiu delay ao usar o controle e aodorou o projeto.
+
+Maria jogava guitar hero no wii quando era menor, porem recentemente foi introduzida a stepmania por usa namorada, e adoro, queria um controle proprio que funciona bem 
+para o jogo, e com isso, replicou nosso projeto, Maria gostou muito das cores dos leds piscando junto com a musica, e gostou de como os botoes estava colocados.
 
 ### Comandos/ Feedbacks (2 pts)
 
