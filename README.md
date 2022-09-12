@@ -40,6 +40,9 @@ Quais são os comandos/ operacões possíveis do seu controle?
 Quais os feedbacks que seu controle vai fornecer ao usuário?
 -->
 
+O controle terá 4 botões para jogar o jogo, em que cada está referente a seta para cima, esquerda, direite e baixo. A cada pressionada destes 4 botões, haverá um LED que será acendido, aumentando a imersão do jogo.
+Terá 1 botão e analógico para navegação dentro do menu do jogo. 
+
 ## In/OUT (3 pts)
 
 <!--
