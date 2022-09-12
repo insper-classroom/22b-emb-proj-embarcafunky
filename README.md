@@ -6,28 +6,31 @@ Desenvolvendo um controle remoto.
 
 ### Integrantes
 
-- Nome1
-- Nome2
+- Diogo Duarte
+- Jorás Oliveira
 
 ### Ideia
 
-<!--  Descreva aqui em poucas palavras qual a ideia do seu controle. Se ele vai ser de jogo ou de aplicação -->
+Controle para jogos de ritmo, ala DDR. Como por exemplo jogos como Guitar hero, Step mania, Friday Night Funkin'
 
 ### Nome
 
-<!-- De um nome ao seu controle! -->
+EmbarcaFunky
 
 ### Usuários 
 
-<!-- Descreva aqui quem seriam os possíveis usuários deste controle. -->
+Fãs de jogos de ritmo. Seria algo que mira no público familiar.
 
 ### Software/Jogo 
 
-<!-- Qual software que seu controle vai controlar? -->
+Para o projeto, criaremos um controle para jogar o jogo StepMania. Stepmania é um jogo de ritmo, em que o jogador terá que acertar as setas no momento certo para obter a pontuação dela.
 
 ### Jornada do usuários (3 pts)
 
 <!-- Descreva ao menos duas jornadas de usuários distintos, é para caprichar! -->
+O usuário quer ter uma nova experiência com um jogo familiar e criar conteúdo que pode ser interessante para outras pessoas.
+
+O usuário quer jogar um jogo de ritmo que tem 4 botões como input, com um controle feito para isto.
 
 ### Comandos/ Feedbacks (2 pts)
 
