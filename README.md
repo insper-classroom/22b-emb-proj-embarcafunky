@@ -32,11 +32,9 @@ O usuário quer ter uma nova experiência com um jogo familiar e criar conteúdo
 
 O usuário quer jogar um jogo de ritmo que tem 4 botões como input, com um controle feito para isto.
 
-Joao joga jogos de ritmo todo dia, ele adora DDR, clone hero,e recentemente descobriu StepMania, mas sentiu que nao tem um controle ideial para jogar, 
-com isso, joao procurou na internet ate achar o nosso projeto e replicou ele para ter o seu proprio controle. Sentiu que nossos 4 botoes estavam perfeitamente colocados, e que o joystick funcionava muito bem para controlar o mouse, nao sentiu delay ao usar o controle e aodorou o projeto.
+João, um aluno de faculdade de música, sempre jogou jogos de ritmo, ele adora o estilo de DDR, mais especificamente Clone Hero, e recentemente descobriu StepMania. Como sempre jogou este tipo de jogos com o controle de guitarra que ganhou de seus pais, ao experimentar StepMania percebeu que sua antiga guitarra não seria útil e sentiu que não seria um controle ideal para jogar. Com isso, João procurou até achar o controle que faremos. Os fatos que chamaram a sua atenção no controle foram que os 4 botões que se assemelhavam a sua antiga guitarra, leds que acendiam ao apertar os botões, e um joystick para conseguir navegar no menu do jogo, algo que é que não tinha em sua antiga guitarra.
 
-Maria jogava guitar hero no wii quando era menor, porem recentemente foi introduzida a stepmania por usa namorada, e adoro, queria um controle proprio que funciona bem 
-para o jogo, e com isso, replicou nosso projeto, Maria gostou muito das cores dos leds piscando junto com a musica, e gostou de como os botoes estava colocados.
+Maria jogava Guitar Hero no Wii quando era menor. Sempre jogou jogos que tinham ritmos e gostava de se sacudir jogando eles. Recentemente foi introduzida a StepMania por sua namorada, e adorou, porém não se adaptou a jogar no teclado do computador de sua namorada. Pensando no seu tempo de Wii, começou a querer um controle próprio que funcionasse bem para o jogo, para que tenha fácil acesso aos botões para serem apertados e consiga se mexer mais ao jogar o jogo de música. Com isso, replicou nosso projeto, Maria gostou muito das cores dos leds piscando junto com os botões sendo apertados, e gostou da disposição dos botões, em que consiguia jogar e dançar ao mesmo tempo.
 
 ### Comandos/ Feedbacks (2 pts)
 
@@ -48,6 +46,15 @@ Quais os feedbacks que seu controle vai fornecer ao usuário?
 
 O controle terá 4 botões para jogar o jogo, em que cada está referente a seta para cima, esquerda, direite e baixo. A cada pressionada destes 4 botões, haverá um LED que será acendido, aumentando a imersão do jogo.
 Terá 1 botão e analógico para navegação dentro do menu do jogo. 
+
+Comandos:
+ - 4 botões para jogar, cada um referente a seta do jogo
+ - 1 botão de navegação
+ - 1 botão de pause
+ - 1 joystick para movimentação no menu
+ 
+ Feedback:
+ - Leds que se acenderão ao botões do jogo serem pressionados, tentando imitar o ritmo da música so jogo nos leds
 
 ## In/OUT (3 pts)
 
