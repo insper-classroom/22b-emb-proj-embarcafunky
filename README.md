@@ -65,6 +65,22 @@ Para cada Comando/ Feedback do seu controle, associe qual sensores/ atuadores pr
 - Volume da música: Fita de LED indicando potência do som
 -->
 
+- Seta para cima: Push botão verde
+- Luz indicando que apertou: LED que se assemelha a cor apertada (Verde)
+
+- Seta para baixo: Push botão vermelho
+- Luz indicando que apertou: LED que se assemelha a cor apertada (Vermelho)
+
+- Seta para esquerda: Push botão amarelo
+- Luz indicando que apertou: LED que se assemelha a cor apertada (Amarelo)
+
+- Seta para direita: Push botão Azul
+- Luz indicando que apertou: LED que se assemelha a cor apertada (Azul)
+
+- Movimentação no menu: Joystick
+- Seleção da opção no menu: Push botão que possui o led
+- Pausar o jogo: Push button
+
 ### Design (2 pts)
 
 <!--
