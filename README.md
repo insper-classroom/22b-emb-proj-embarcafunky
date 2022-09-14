@@ -86,3 +86,5 @@ Para cada Comando/ Feedback do seu controle, associe qual sensores/ atuadores pr
 <!--
 Faca um esboco de como seria esse controle (vai ter uma etapa que terão que detalhar melhor isso).
 -->
+
+![alt text](https://github.com/insper-classroom/22b-emb-proj-embarcafunky/blob/master/imgCerta.png?raw=true)
