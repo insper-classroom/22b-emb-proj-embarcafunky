@@ -30,10 +30,10 @@ class SerialControllerInterface:
         data = self.ser.read()
         logging.debug("Received DATA: {}".format(data))
 
-        if data == b'1':
+        if data == b'11':
             logging.info("Sending press")
             self.j.set_button(self.mapping.button['A'], 1)
-        elif data == b'0':
+        elif data == b'10':
             self.j.set_button(self.mapping.button['A'], 0)
 
         self.incoming = self.ser.read()
