@@ -55,11 +55,19 @@
 #define BUT4_IDX 6
 #define BUT4_IDX_MASK (1u << BUT4_IDX)
 
+//rumble
+
+#define LED_PIO         PIOD  //periferico que controla o LED
+#define LED_PIO_ID      ID_PIOD    //ID do periferico PIOC
+#define LED_PIO_IDX     26	  //ID do LED no PIO
+#define LED_PIO_IDX_MASK  (1 << LED_PIO_IDX) //Mascara para CONTROLARMOS o LED
+
+
 // usart (bluetooth ou serial)
 // Descomente para enviar dados
 // pela serial debug
 
-//#define DEBUG_SERIAL
+#define DEBUG_SERIAL
 
 #ifdef DEBUG_SERIAL
 #define USART_COM USART1
@@ -166,12 +174,12 @@ void but2_callback(void){
 	if(pio_get(BUT2_PIO, PIO_INPUT, BUT2_IDX_MASK) == 0) {
 		//rise edge
 		b2.status = '1'; //id 1 para bottao 1 apertado
-		xQueueSend(xQueueBut, &b2, 0);
+		xQueueSendFromISR(xQueueBut, &b2, 0);
 	}
 	else{
 		//fall edge
 		b2.status = '0'; //id 0 para bottao 1 solto
-		xQueueSend(xQueueBut, &b2, 0);
+		xQueueSendFromISR(xQueueBut, &b2, 0);
 	}
 }
 
@@ -183,12 +191,12 @@ void but3_callback(void){
 	if(pio_get(BUT3_PIO, PIO_INPUT, BUT3_IDX_MASK) == 0) {
 		//rise edge
 		b3.status = '1'; //id 1 para bottao 1 apertado
-		xQueueSend(xQueueBut, &b3, 0);
+		xQueueSendFromISR(xQueueBut, &b3, 0);
 	}
 	else{
 		//fall edge
 		b3.status = '0'; //id 0 para bottao 1 solto
-		xQueueSend(xQueueBut, &b3, 0);
+		xQueueSendFromISR(xQueueBut, &b3, 0);
 	}
 }
 
@@ -200,12 +208,12 @@ void but4_callback(void){
 	if(pio_get(BUT4_PIO, PIO_INPUT, BUT4_IDX_MASK) == 0) {
 		//rise edge
 		b4.status = '1';//id 1 para bottao 1 apertado
-		xQueueSend(xQueueBut, &b4, 0);
+		xQueueSendFromISR(xQueueBut, &b4, 0);
 	}
 	else{
 		//fall edge
 		b4.status = '0'; //id 0 para bottao 1 solto
-		xQueueSend(xQueueBut, &b4, 0);
+		xQueueSendFromISR(xQueueBut, &b4, 0);
 	}
 }
 
@@ -292,6 +300,13 @@ void io_init(void) {
 	pio_get_interrupt_status(BUT4_PIO);
 	NVIC_EnableIRQ(BUT4_ID);
 	NVIC_SetPriority(BUT4_ID, 4); // Prioridade 4
+	
+	//rumble
+	//Ativa o PIO que o LED esta conectado
+	pmc_enable_periph_clk(LED_PIO_ID);
+		
+	//Inicializacao PC8 como saidoa
+	pio_set_output(LED_PIO, LED_PIO_IDX_MASK, 0, 0, 0);
 }
 
 static void configure_console(void) {
@@ -403,13 +418,10 @@ void task_bluetooth(void) {
 	while(1) {
 		
 		if(xQueueReceiveFromISR( xQueueBut, &data, ( TickType_t ) 1 )){
-			// envia status botão
-			
-			while(!usart_is_tx_ready(USART_COM)) {
-				vTaskDelay(10 / portTICK_PERIOD_MS);
-			}
+			pio_set(LED_PIO, LED_PIO_IDX_MASK);
 			//mandando o ID
 			usart_write(USART_COM, data.id);
+			printf("%c", data.id);
 			
 			while(!usart_is_tx_ready(USART_COM)) {
 				vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -417,6 +429,7 @@ void task_bluetooth(void) {
 			
 			//mandando o status
 			usart_write(USART_COM, data.status);
+			printf("%c", data.status);
 						
 			while(!usart_is_tx_ready(USART_COM)) {
 				vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -428,10 +441,13 @@ void task_bluetooth(void) {
 				vTaskDelay(10 / portTICK_PERIOD_MS);
 			}
 			usart_write(USART_COM, data.eop);
+			printf("%c", data.eop);
+			
 			
 
 			// dorme por 500 ms
-			vTaskDelay(500 / portTICK_PERIOD_MS);
+			vTaskDelay(5 / portTICK_PERIOD_MS);
+			pio_clear(LED_PIO, LED_PIO_IDX_MASK);
 		}
 	}
 }
