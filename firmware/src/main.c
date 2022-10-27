@@ -29,16 +29,16 @@
 
 //botao 1 do controle:
 // Config do BUT1 
-#define BUT1_PIO PIOC
-#define BUT1_ID ID_PIOC
-#define BUT1_IDX 13
+#define BUT1_PIO PIOA
+#define BUT1_ID ID_PIOA
+#define BUT1_IDX 24
 #define BUT1_IDX_MASK (1u << BUT1_IDX)
 
 //botao 2 do controle:
 // Config do BUT2 
-#define BUT2_PIO PIOD
-#define BUT2_ID ID_PIOD
-#define BUT2_IDX 30
+#define BUT2_PIO PIOC
+#define BUT2_ID ID_PIOC
+#define BUT2_IDX 19
 #define BUT2_IDX_MASK (1u << BUT2_IDX)
 
 //botao 3 do controle:
@@ -62,6 +62,12 @@
 #define LED_PIO_IDX     26	  //ID do LED no PIO
 #define LED_PIO_IDX_MASK  (1 << LED_PIO_IDX) //Mascara para CONTROLARMOS o LED
 
+//analogico
+
+#define AFEC_Y AFEC0
+#define AFEC_Y_ID ID_AFEC0
+#define AFEC_Y_CHANNEL 0 // Canal do pino PD30
+
 
 // usart (bluetooth ou serial)
 // Descomente para enviar dados
@@ -84,8 +90,15 @@
 #define TASK_BLUETOOTH_STACK_SIZE            (4096/sizeof(portSTACK_TYPE))
 #define TASK_BLUETOOTH_STACK_PRIORITY        (tskIDLE_PRIORITY)
 
+#define TASK_ADC_STACK_SIZE (1024 * 10 / sizeof(portSTACK_TYPE))
+#define TASK_ADC_STACK_PRIORITY (tskIDLE_PRIORITY)
+
 //queue for the buttons
 QueueHandle_t xQueueBut;
+
+TimerHandle_t xTimer;
+/** Queue for msg log send data */
+QueueHandle_t xQueueADC;
 
 /************************************************************************/
 /* prototypes                                                           */
@@ -97,6 +110,7 @@ extern void vApplicationIdleHook(void);
 extern void vApplicationTickHook(void);
 extern void vApplicationMallocFailedHook(void);
 extern void xPortSysTickHandler(void);
+//static void config_AFEC_pot(Afec *afec, uint32_t afec_id, uint32_t afec_channel, afec_callback_t callback);
 
 /************************************************************************/
 /* constants                                                            */
@@ -111,6 +125,9 @@ struct ButStruct{
 	char status;
 	char eop;
 };
+typedef struct {
+	uint value;
+} adcData;
 
 /************************************************************************/
 /* RTOS application HOOK                                                */
@@ -217,6 +234,12 @@ void but4_callback(void){
 	}
 }
 
+static void AFEC_pot_callback(void) {
+	adcData adc;
+	adc.value = afec_channel_get_value(AFEC_Y, AFEC_Y_CHANNEL);
+	BaseType_t xHigherPriorityTaskWoken = pdTRUE;
+	xQueueSendFromISR(xQueueADC, &adc, &xHigherPriorityTaskWoken);
+}
 
 /************************************************************************/
 
@@ -230,6 +253,8 @@ void io_init(void) {
 	pmc_enable_periph_clk(LED_PIO_ID);
 	pio_configure(LED_PIO, PIO_OUTPUT_0, LED_IDX_MASK, PIO_DEFAULT | PIO_DEBOUNCE);
 	//pmc_enable_periph_clk(BUT_PIO_ID);
+	
+	
 	
 
 
@@ -399,6 +424,50 @@ int hc05_init(void) {
 	usart_send_command(USART_COM, buffer_rx, 1000, "AT+PIN0000", 100);
 }
 
+static void config_AFEC_pot(Afec *afec, uint32_t afec_id, uint32_t afec_channel, afec_callback_t callback) {
+	/*************************************
+   * Ativa e configura AFEC
+   *************************************/
+  /* Ativa AFEC - 0 */
+  afec_enable(afec);
+
+  /* struct de configuracao do AFEC */
+  struct afec_config afec_cfg;
+
+  /* Carrega parametros padrao */
+  afec_get_config_defaults(&afec_cfg);
+
+  /* Configura AFEC */
+  afec_init(afec, &afec_cfg);
+
+  /* Configura trigger por software */
+  afec_set_trigger(afec, AFEC_TRIG_SW);
+
+  /*** Configuracao específica do canal AFEC ***/
+  struct afec_ch_config afec_ch_cfg;
+  afec_ch_get_config_defaults(&afec_ch_cfg);
+  afec_ch_cfg.gain = AFEC_GAINVALUE_0;
+  afec_ch_set_config(afec, afec_channel, &afec_ch_cfg);
+
+  /*
+  * Calibracao:
+  * Because the internal ADC offset is 0x200, it should cancel it and shift
+  down to 0.
+  */
+  afec_channel_set_analog_offset(afec, afec_channel, 0x200);
+
+  /***  Configura sensor de temperatura ***/
+  struct afec_temp_sensor_config afec_temp_sensor_cfg;
+
+  afec_temp_sensor_get_config_defaults(&afec_temp_sensor_cfg);
+  afec_temp_sensor_set_config(afec, &afec_temp_sensor_cfg);
+
+  /* configura IRQ */
+  afec_set_callback(afec, afec_channel, callback, 1);
+  NVIC_SetPriority(afec_id, 4);
+  NVIC_EnableIRQ(afec_id);
+}
+
 /************************************************************************/
 /* TASKS                                                                */
 /************************************************************************/
@@ -452,6 +521,49 @@ void task_bluetooth(void) {
 	}
 }
 
+void vTimerCallback(TimerHandle_t xTimer) {
+	/* Selecina canal e inicializa conversão */
+	afec_channel_enable(AFEC_Y, AFEC_Y_CHANNEL);
+	afec_start_software_conversion(AFEC_Y);
+}
+
+static void task_adc(void *pvParameters) {
+
+  // configura ADC e TC para controlar a leitura
+  config_AFEC_pot(AFEC_Y, AFEC_Y_ID, AFEC_Y_CHANNEL, AFEC_pot_callback);
+
+  xTimer = xTimerCreate(/* Just a text name, not used by the RTOS
+                        kernel. */
+                        "Timer",
+                        /* The timer period in ticks, must be
+                        greater than 0. */
+                        100,
+                        /* The timers will auto-reload themselves
+                        when they expire. */
+                        pdTRUE,
+                        /* The ID is used to store a count of the
+                        number of times the timer has expired, which
+                        is initialised to 0. */
+                        (void *)0,
+                        /* Timer callback */
+                        vTimerCallback);
+  xTimerStart(xTimer, 0);
+  
+  // Task não deve retornar.
+  while(1) {
+	  
+	  // variável para recever dados da fila
+	  adcData adc;
+
+	  if (xQueueReceiveFromISR(xQueueADC, &(adc), 1000)) {
+		  printf("ADC: %d \n", adc);
+	  }
+	  else {
+		  //printf("Nao chegou um novo dado em 1 segundo");
+	  }
+  }
+}
+
 /************************************************************************/
 /* main                                                                 */
 /************************************************************************/
@@ -473,10 +585,16 @@ int main(void) {
 		printf("falha em criar a fila \n");
 	}
 	
+	xQueueADC = xQueueCreate(100, sizeof(adcData));
+	if (xQueueADC == NULL)
+	printf("falha em criar a queue xQueueADC \n");
+	
 	
 
 	/* Create task to make led blink */
 	xTaskCreate(task_bluetooth, "BLT", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
+	
+	xTaskCreate(task_adc, "ADC", TASK_ADC_STACK_SIZE, NULL, TASK_ADC_STACK_PRIORITY, NULL);
 	
 	
 	
