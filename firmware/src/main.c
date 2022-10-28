@@ -28,17 +28,18 @@
 */
 
 //botao 1 do controle:
-// Config do BUT1 
+// Config do BUT1
 #define BUT1_PIO PIOA
 #define BUT1_ID ID_PIOA
 #define BUT1_IDX 24
 #define BUT1_IDX_MASK (1u << BUT1_IDX)
 
 //botao 2 do controle:
-// Config do BUT2 
+// Config do BUT2
 #define BUT2_PIO PIOC
 #define BUT2_ID ID_PIOC
 #define BUT2_IDX 19
+#define BUT2_IDX_MASK (1u << BUT2_IDX)
 #define BUT2_IDX_MASK (1u << BUT2_IDX)
 
 //botao 3 do controle:
@@ -54,6 +55,7 @@
 #define BUT4_ID ID_PIOA
 #define BUT4_IDX 6
 #define BUT4_IDX_MASK (1u << BUT4_IDX)
+
 
 //rumble
 
@@ -72,8 +74,7 @@
 // usart (bluetooth ou serial)
 // Descomente para enviar dados
 // pela serial debug
-
-#define DEBUG_SERIAL
+//#define DEBUG_SERIAL
 
 #ifdef DEBUG_SERIAL
 #define USART_COM USART1
@@ -95,10 +96,12 @@
 
 //queue for the buttons
 QueueHandle_t xQueueBut;
-
-TimerHandle_t xTimer;
 /** Queue for msg log send data */
-QueueHandle_t xQueueADC;
+QueueHandle_t xQueueADC;;
+
+
+//timer para o afec
+TimerHandle_t xTimer;
 
 /************************************************************************/
 /* prototypes                                                           */
@@ -110,7 +113,7 @@ extern void vApplicationIdleHook(void);
 extern void vApplicationTickHook(void);
 extern void vApplicationMallocFailedHook(void);
 extern void xPortSysTickHandler(void);
-//static void config_AFEC_pot(Afec *afec, uint32_t afec_id, uint32_t afec_channel, afec_callback_t callback);
+static void config_AFEC_pot(Afec *afec, uint32_t afec_id, uint32_t afec_channel, afec_callback_t callback);
 
 /************************************************************************/
 /* constants                                                            */
@@ -125,6 +128,7 @@ struct ButStruct{
 	char status;
 	char eop;
 };
+
 typedef struct {
 	uint value;
 } adcData;
@@ -241,6 +245,8 @@ static void AFEC_pot_callback(void) {
 	xQueueSendFromISR(xQueueADC, &adc, &xHigherPriorityTaskWoken);
 }
 
+
+
 /************************************************************************/
 
 /************************************************************************/
@@ -253,14 +259,8 @@ void io_init(void) {
 	pmc_enable_periph_clk(LED_PIO_ID);
 	pio_configure(LED_PIO, PIO_OUTPUT_0, LED_IDX_MASK, PIO_DEFAULT | PIO_DEBOUNCE);
 	//pmc_enable_periph_clk(BUT_PIO_ID);
-	
-	
-	
-
-
 
 	//botao 1
-	
 	// Configura Pinos
 	pmc_enable_periph_clk(BUT1_ID);
 	
@@ -276,7 +276,7 @@ void io_init(void) {
 	pio_enable_interrupt(BUT1_PIO, BUT1_IDX_MASK);
 	pio_get_interrupt_status(BUT1_PIO);
 	NVIC_EnableIRQ(BUT1_ID);
-	NVIC_SetPriority(BUT1_ID, 4); // Prioridade 4
+	NVIC_SetPriority(BUT1_ID, 4); // Prioridade 4
 
 	//botao 2
 	pmc_enable_periph_clk(BUT2_ID);
@@ -290,7 +290,7 @@ void io_init(void) {
 	pio_enable_interrupt(BUT2_PIO, BUT2_IDX_MASK);
 	pio_get_interrupt_status(BUT2_PIO);
 	NVIC_EnableIRQ(BUT2_ID);
-	NVIC_SetPriority(BUT2_ID, 4); // Prioridade 4
+	NVIC_SetPriority(BUT2_ID, 4); // Prioridade 4
 
 	//botao 3
 	pmc_enable_periph_clk(BUT3_ID);
@@ -304,10 +304,9 @@ void io_init(void) {
 	pio_enable_interrupt(BUT3_PIO, BUT3_IDX_MASK);
 	pio_get_interrupt_status(BUT3_PIO);
 	NVIC_EnableIRQ(BUT3_ID);
-	NVIC_SetPriority(BUT3_ID, 4); // Prioridade 4
+	NVIC_SetPriority(BUT3_ID, 4); // Prioridade 4
 
 	//bota4
-	
 	pmc_enable_periph_clk(BUT4_ID);
 	pio_configure(BUT4_PIO, PIO_INPUT, BUT4_IDX_MASK, PIO_PULLUP | PIO_DEBOUNCE);
 	pio_set_debounce_filter(BUT4_PIO, BUT4_IDX_MASK, 60);
@@ -324,12 +323,12 @@ void io_init(void) {
 	//status da interrupcao	
 	pio_get_interrupt_status(BUT4_PIO);
 	NVIC_EnableIRQ(BUT4_ID);
-	NVIC_SetPriority(BUT4_ID, 4); // Prioridade 4
+	NVIC_SetPriority(BUT4_ID, 4); // Prioridade 4
 	
 	//rumble
 	//Ativa o PIO que o LED esta conectado
 	pmc_enable_periph_clk(LED_PIO_ID);
-		
+	
 	//Inicializacao PC8 como saidoa
 	pio_set_output(LED_PIO, LED_PIO_IDX_MASK, 0, 0, 0);
 }
@@ -487,10 +486,15 @@ void task_bluetooth(void) {
 	while(1) {
 		
 		if(xQueueReceiveFromISR( xQueueBut, &data, ( TickType_t ) 1 )){
+			// envia status botão
+			
+			while(!usart_is_tx_ready(USART_COM)) {
+				vTaskDelay(10 / portTICK_PERIOD_MS);
+			}
 			pio_set(LED_PIO, LED_PIO_IDX_MASK);
 			//mandando o ID
 			usart_write(USART_COM, data.id);
-			printf("%c", data.id);
+			printf("\n id: %c", data.id);
 			
 			while(!usart_is_tx_ready(USART_COM)) {
 				vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -498,7 +502,7 @@ void task_bluetooth(void) {
 			
 			//mandando o status
 			usart_write(USART_COM, data.status);
-			printf("%c", data.status);
+			printf("\n status: %c", data.status);
 						
 			while(!usart_is_tx_ready(USART_COM)) {
 				vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -510,8 +514,6 @@ void task_bluetooth(void) {
 				vTaskDelay(10 / portTICK_PERIOD_MS);
 			}
 			usart_write(USART_COM, data.eop);
-			printf("%c", data.eop);
-			
 			
 
 			// dorme por 500 ms
@@ -549,21 +551,19 @@ static void task_adc(void *pvParameters) {
                         vTimerCallback);
   xTimerStart(xTimer, 0);
   
-  // Task não deve retornar.
   while(1) {
 	  
 	  // variável para recever dados da fila
 	  adcData adc;
 
 	  if (xQueueReceiveFromISR(xQueueADC, &(adc), 1000)) {
-		  printf("ADC: %d \n", adc);
+		  //printf("ADC: %d \n", adc);
 	  }
 	  else {
 		  //printf("Nao chegou um novo dado em 1 segundo");
 	  }
   }
 }
-
 /************************************************************************/
 /* main                                                                 */
 /************************************************************************/
@@ -586,17 +586,13 @@ int main(void) {
 	}
 	
 	xQueueADC = xQueueCreate(100, sizeof(adcData));
-	if (xQueueADC == NULL)
-	printf("falha em criar a queue xQueueADC \n");
-	
-	
-
+	if (xQueueADC == NULL){
+		printf("falha em criar a queue xQueueADC \n");
+	}
 	/* Create task to make led blink */
 	xTaskCreate(task_bluetooth, "BLT", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
-	
+	//task adc
 	xTaskCreate(task_adc, "ADC", TASK_ADC_STACK_SIZE, NULL, TASK_ADC_STACK_PRIORITY, NULL);
-	
-	
 	
 	/* Start the scheduler. */
 	vTaskStartScheduler();
