@@ -40,7 +40,6 @@
 #define BUT2_ID ID_PIOC
 #define BUT2_IDX 19
 #define BUT2_IDX_MASK (1u << BUT2_IDX)
-#define BUT2_IDX_MASK (1u << BUT2_IDX)
 
 //botao 3 do controle:
 // Config do BUT3
@@ -56,9 +55,16 @@
 #define BUT4_IDX 6
 #define BUT4_IDX_MASK (1u << BUT4_IDX)
 
+//botao para handhshake
+#define BUTH_PIO PIOA
+#define BUTH_ID ID_PIOA
+#define BUTH_IDX 2
+#define BUTH_IDX_MASK (1u << BUTH_IDX)
+
+
+
 
 //rumble
-
 #define LED_PIO         PIOD  //periferico que controla o LED
 #define LED_PIO_ID      ID_PIOD    //ID do periferico PIOC
 #define LED_PIO_IDX     26	  //ID do LED no PIO
@@ -238,6 +244,25 @@ void but4_callback(void){
 	}
 }
 
+
+void buth_callback(void){
+	struct ButStruct bh;
+	bh.id = '5';
+	bh.eop = 'X';
+	
+	if(pio_get(BUTH_PIO, PIO_INPUT, BUTH_IDX_MASK) == 0) {
+		//rise edge
+		bh.status = '1';//id 1 para bottao 1 apertado
+		xQueueSendFromISR(xQueueBut, &bh, 0);
+		printf("botao foi apertado");
+	}
+	else{
+		//fall edge
+		bh.status = '0'; //id 0 para bottao 1 solto
+		xQueueSendFromISR(xQueueBut, &bh, 0);
+	}
+}
+
 static void AFEC_pot_callback(void) {
 	adcData adc;
 	adc.value = afec_channel_get_value(AFEC_Y, AFEC_Y_CHANNEL);
@@ -324,6 +349,25 @@ void io_init(void) {
 	pio_get_interrupt_status(BUT4_PIO);
 	NVIC_EnableIRQ(BUT4_ID);
 	NVIC_SetPriority(BUT4_ID, 4); // Prioridade 4
+	
+	//botah
+	pmc_enable_periph_clk(BUTH_ID);
+	pio_configure(BUTH_PIO, PIO_INPUT, BUTH_IDX_MASK, PIO_PULLUP | PIO_DEBOUNCE);
+	pio_set_debounce_filter(BUTH_PIO, BUTH_IDX_MASK, 60);
+	// Configura interrupção no pino referente ao botao e associa
+	// função de callback caso uma interrupção for gerada
+	// a função de callback é a: but_callback()
+	pio_handler_set(BUTH_PIO,
+	BUTH_ID,
+	BUTH_IDX_MASK,
+	PIO_IT_EDGE,
+	buth_callback);
+	// Ativa interrupção e limpa primeira IRQ gerada na ativacao
+	pio_enable_interrupt(BUTH_PIO, BUTH_IDX_MASK);
+	//status da interrupcao
+	pio_get_interrupt_status(BUTH_PIO);
+	NVIC_EnableIRQ(BUTH_ID);
+	NVIC_SetPriority(BUTH_ID, 4); // Prioridade 4
 	
 	//rumble
 	//Ativa o PIO que o LED esta conectado
@@ -482,10 +526,39 @@ void task_bluetooth(void) {
 	io_init();
 
 	struct ButStruct data;
+	int handhsake = 0;
 	// Task não deve retornar.
 	while(1) {
 		
-		if(xQueueReceiveFromISR( xQueueBut, &data, ( TickType_t ) 1 )){
+		//handhsake
+		if(xQueueReceiveFromISR( xQueueBut, &data, ( TickType_t ) 1) ){
+		
+			if(data.id == '5'){
+			
+				while(!usart_is_tx_ready(USART_COM)) {
+					vTaskDelay(10 / portTICK_PERIOD_MS);
+				}
+			
+				//mandando o status
+				usart_write(USART_COM, data.id);
+				printf("iniciando HandShake, com botao: %d", data.id);
+			}
+			
+			while(!handhsake){
+				
+				while(!usart_is_rx_ready(USART_COM)) {
+					vTaskDelay(10 / portTICK_PERIOD_MS);
+				}
+				
+				char *c;
+				usart_read(USART_COM, &c);
+				if (c == 'A'){
+					handhsake = 1;
+				}
+			}
+		}
+		
+		if( (xQueueReceiveFromISR( xQueueBut, &data, ( TickType_t ) 1)) && handhsake ){
 			// envia status botão
 			
 			while(!usart_is_tx_ready(USART_COM)) {
@@ -558,9 +631,60 @@ static void task_adc(void *pvParameters) {
 
 	  if (xQueueReceiveFromISR(xQueueADC, &(adc), 1000)) {
 		  //printf("ADC: %d \n", adc);
-	  }
-	  else {
-		  //printf("Nao chegou um novo dado em 1 segundo");
+		  
+		  if(adc.value < 1500){
+			  		  
+			while(!usart_is_tx_ready(USART_COM)) {
+				vTaskDelay(10 / portTICK_PERIOD_MS);
+			}
+			  		  
+			//mandando 
+			usart_write(USART_COM, 'D'); //D == down
+			
+			while(!usart_is_tx_ready(USART_COM)) {
+				vTaskDelay(10 / portTICK_PERIOD_MS);
+			}
+						
+			//mandando o status
+			usart_write(USART_COM, 'D'); //D == down 
+			  		  
+			// envia fim de pacote
+			  		  
+			while(!usart_is_tx_ready(USART_COM)) {
+				vTaskDelay(10 / portTICK_PERIOD_MS);
+			}
+			usart_write(USART_COM, 'X');
+			  
+		  }
+		  
+		  		  
+		if(adc.value > 3000){
+			  		  
+			while(!usart_is_tx_ready(USART_COM)) {
+				vTaskDelay(10 / portTICK_PERIOD_MS);
+			}
+			  		  
+			//mandando 
+			usart_write(USART_COM,'U'); //D == down
+			
+			while(!usart_is_tx_ready(USART_COM)) {
+				vTaskDelay(10 / portTICK_PERIOD_MS);
+			}
+						
+			//mandando o status
+			usart_write(USART_COM, 'U'); //D == down
+			  		  
+			// envia fim de pacote
+			  		  
+			while(!usart_is_tx_ready(USART_COM)) {
+				vTaskDelay(10 / portTICK_PERIOD_MS);
+			}
+			usart_write(USART_COM, 'X');
+			  		  
+		}
+		  
+		// dorme por 5 ms
+		vTaskDelay(5 / portTICK_PERIOD_MS);
 	  }
   }
 }

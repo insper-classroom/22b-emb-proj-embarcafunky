@@ -6,7 +6,7 @@ import pyvjoy # Windows apenas
 
 class MyControllerMap:
     def __init__(self):
-        self.button = {'A': 1, 'B': 2, 'C': 3, 'D': 4}
+        self.button = {'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E' : 5, 'F' : 6}
 
 
 class SerialControllerInterface:
@@ -32,38 +32,60 @@ class SerialControllerInterface:
         data_status = self.ser.read()
         logging.debug("Received DATA_ID: {}".format(data_id))
         logging.debug("Received DATA_status: {}".format(data_status))
+        handshake = False
 
-        if data_id == b'1':
-            if (data_status == b'1'): 
-                logging.info("Sending press")
-                self.j.set_button(self.mapping.button['A'], 1)
+        #rotina para handhsahe
 
-            elif data_status == b'0':
-                self.j.set_button(self.mapping.button['A'], 0)
+        if data_id == b'5':
+            logging.info("recebi handhsake")
+            self.ser.write(b'A')
 
-        if data_id == b'2':
-            if (data_status == b'1'): 
-                logging.info("Sending press")
-                self.j.set_button(self.mapping.button['B'], 1)
+        if(handshake):
+            if data_id == b'1':
+                if (data_status == b'1'): 
+                    logging.info("Sending press")
+                    self.j.set_button(self.mapping.button['A'], 1)
 
-            elif data_status == b'0':
-                self.j.set_button(self.mapping.button['B'], 0)
+                elif data_status == b'0':
+                    self.j.set_button(self.mapping.button['A'], 0)
 
-        if data_id == b'3':
-            if (data_status == b'1'): 
-                logging.info("Sending press")
-                self.j.set_button(self.mapping.button['C'], 1)
+            if data_id == b'2':
+                if (data_status == b'1'): 
+                    logging.info("Sending press")
+                    self.j.set_button(self.mapping.button['B'], 1)
 
-            elif data_status == b'0':
-                self.j.set_button(self.mapping.button['C'], 0)
-                
-        if data_id == b'4':
-            if (data_status == b'1'): 
-                logging.info("Sending press")
-                self.j.set_button(self.mapping.button['D'], 1)
+                elif data_status == b'0':
+                    self.j.set_button(self.mapping.button['B'], 0)
 
-            elif data_status == b'0':
-                self.j.set_button(self.mapping.button['D'], 0)
+            if data_id == b'3':
+                if (data_status == b'1'): 
+                    logging.info("Sending press")
+                    self.j.set_button(self.mapping.button['C'], 1)
+
+                elif data_status == b'0':
+                    self.j.set_button(self.mapping.button['C'], 0)
+                    
+            if data_id == b'4':
+                if (data_status == b'1'): 
+                    logging.info("Sending press")
+                    self.j.set_button(self.mapping.button['D'], 1)
+
+                elif data_status == b'0':
+                    self.j.set_button(self.mapping.button['D'], 0)
+            else:
+                if(data_id == b'U'): #up
+                    logging.info("Sending press")
+                    self.j.set_button(self.mapping.button['E'], 1)
+                    #soltando
+                    logging.info("Sending press")
+                    self.j.set_button(self.mapping.button['E'], 0)
+
+                if(data_id == b'D'): #down
+                    logging.info("Sending press")
+                    self.j.set_button(self.mapping.button['F'], 1)
+                    #soltando
+                    logging.info("Sending press")
+                    self.j.set_button(self.mapping.button['F'], 0)
 
         self.incoming = self.ser.read()
 
