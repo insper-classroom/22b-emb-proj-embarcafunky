@@ -44,17 +44,16 @@ Quais são os comandos/ operacões possíveis do seu controle?
 Quais os feedbacks que seu controle vai fornecer ao usuário?
 -->
 
-O controle terá 4 botões para jogar, em que cada está referente a seta para cima, esquerda, direite e baixo. A cada pressionada destes 4 botões, haverá um LED que será aceso, aumentando a imersão do jogo.
+O controle terá 4 botões para jogar, em que cada está referente a seta para cima, esquerda, direite e baixo. A cada pressionada destes 4 botões, haverá um Rumble que causará tremor no controle, aumentando a imersão do jogo.
 Terá 1 botão e analógico para navegação dentro do menu do jogo. 
 
 Comandos:
  - 4 botões para jogar, cada um referente a seta do jogo
  - 1 botão de navegação
- - 1 botão de pause
  - 1 joystick para movimentação no menu
  
  Feedback:
- - Leds que serão acesos caso os botões do jogo sejam pressionados, tentando imitar o ritmo da música do jogo nos leds
+ - Rumble que irá tremer o controle a cada vez que um botão ser apertado, aumentando a imersão do jogo.
 
 ## In/OUT (3 pts)
 
@@ -66,20 +65,19 @@ Para cada Comando/ Feedback do seu controle, associe qual sensores/ atuadores pr
 -->
 
 - Seta para cima: Push botão verde
-- Luz piscando que apertou: LED que se assemelha a cor apertada (Verde)
+- Rumble: Treme o controle
 
 - Seta para baixo: Push botão vermelho
-- Luz piscando que apertou: LED que se assemelha a cor apertada (Vermelho)
+- Rumble: Treme o controle
 
 - Seta para esquerda: Push botão amarelo
-- Luz piscando que apertou: LED que se assemelha a cor apertada (Amarelo)
+- Rumble: Treme o controle
 
 - Seta para direita: Push botão Azul
-- Luz piscando que apertou: LED que se assemelha a cor apertada (Azul)
+- Rumble: Treme o controle
 
 - Movimentação no menu: Joystick
 - Seleção da opção no menu: Push botão que possui o led
-- Pausar o jogo: Push button
 
 ### Design (2 pts)
 
