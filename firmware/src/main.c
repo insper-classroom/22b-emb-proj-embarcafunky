@@ -244,7 +244,6 @@ void but4_callback(void){
 	}
 }
 
-
 void buth_callback(void){
 	struct ButStruct bh;
 	bh.id = '5';
@@ -465,7 +464,10 @@ int hc05_init(void) {
 	usart_send_command(USART_COM, buffer_rx, 1000, "AT", 100);
 	vTaskDelay( 500 / portTICK_PERIOD_MS);
 	usart_send_command(USART_COM, buffer_rx, 1000, "AT+PIN0000", 100);
+	vTaskDelay( 500 / portTICK_PERIOD_MS);
+	usart_send_command(USART_COM, buffer_rx, 1000, "X", 100);
 }
+
 
 static void config_AFEC_pot(Afec *afec, uint32_t afec_id, uint32_t afec_channel, afec_callback_t callback) {
 	/*************************************
@@ -530,35 +532,52 @@ void task_bluetooth(void) {
 	// Task não deve retornar.
 	while(1) {
 		
-		//handhsake
-		if(xQueueReceiveFromISR( xQueueBut, &data, ( TickType_t ) 1) ){
-		
-			if(data.id == '5'){
-			
-				while(!usart_is_tx_ready(USART_COM)) {
-					vTaskDelay(10 / portTICK_PERIOD_MS);
-				}
-			
-				//mandando o status
-				usart_write(USART_COM, data.id);
-				printf("iniciando HandShake, com botao: %d", data.id);
-			}
-			
-			while(!handhsake){
+			//handhsake
+			if( (xQueueReceiveFromISR( xQueueBut, &data, ( TickType_t ) 1) ) && (handhsake == 0)){
+					
+				if(data.id == '5'){
+					
+					while(!usart_is_tx_ready(USART_COM)) {
+						vTaskDelay(10 / portTICK_PERIOD_MS);
+					}
+						
+					//mandando o id
+					usart_write(USART_COM, data.id);
+						
+					while(!usart_is_tx_ready(USART_COM)) {
+						vTaskDelay(10 / portTICK_PERIOD_MS);
+					}
+						
+					//mandando o status
+					usart_write(USART_COM, data.status);
+					printf("iniciando HandShake, com botao: %c", data.id);
+						
+					// envia fim de pacote
+						
+					while(!usart_is_tx_ready(USART_COM)) {
+						vTaskDelay(10 / portTICK_PERIOD_MS);
+					}
+					usart_write(USART_COM, data.eop);
+						
+
+					// dorme por 500 ms
+					vTaskDelay(5 / portTICK_PERIOD_MS);
+					
+					while(!usart_is_rx_ready(USART_COM)) {
+						vTaskDelay(10 / portTICK_PERIOD_MS);
+					}
 				
-				while(!usart_is_rx_ready(USART_COM)) {
-					vTaskDelay(10 / portTICK_PERIOD_MS);
-				}
+					char *c;
+					usart_read(USART_COM, &c);
+					printf("recebemos %c", c);
 				
-				char *c;
-				usart_read(USART_COM, &c);
-				if (c == 'A'){
+					if (c == 'A'){
 					handhsake = 1;
+					}
 				}
 			}
-		}
-		
-		if( (xQueueReceiveFromISR( xQueueBut, &data, ( TickType_t ) 1)) && handhsake ){
+			
+		if( (xQueueReceiveFromISR( xQueueBut, &data, ( TickType_t ) 1)) && handhsake){
 			// envia status botão
 			
 			while(!usart_is_tx_ready(USART_COM)) {
@@ -567,7 +586,7 @@ void task_bluetooth(void) {
 			pio_set(LED_PIO, LED_PIO_IDX_MASK);
 			//mandando o ID
 			usart_write(USART_COM, data.id);
-			printf("\n id: %c", data.id);
+			//printf("\n id: %c", data.id);
 			
 			while(!usart_is_tx_ready(USART_COM)) {
 				vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -575,7 +594,7 @@ void task_bluetooth(void) {
 			
 			//mandando o status
 			usart_write(USART_COM, data.status);
-			printf("\n status: %c", data.status);
+			//printf("\n status: %c", data.status);
 						
 			while(!usart_is_tx_ready(USART_COM)) {
 				vTaskDelay(10 / portTICK_PERIOD_MS);

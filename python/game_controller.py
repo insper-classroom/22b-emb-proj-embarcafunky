@@ -3,6 +3,7 @@ import argparse
 import time
 import logging
 import pyvjoy # Windows apenas
+handshake = False 
 
 class MyControllerMap:
     def __init__(self):
@@ -23,6 +24,7 @@ class SerialControllerInterface:
 
     def update(self):
         ## Sync protocol
+        global handshake
         while self.incoming != b'X':
             self.incoming = self.ser.read()
             logging.debug("Received INCOMING: {}".format(self.incoming))
@@ -32,18 +34,20 @@ class SerialControllerInterface:
         data_status = self.ser.read()
         logging.debug("Received DATA_ID: {}".format(data_id))
         logging.debug("Received DATA_status: {}".format(data_status))
-        handshake = False
 
-        #rotina para handhsahe
 
-        if data_id == b'5':
-            logging.info("recebi handhsake")
-            self.ser.write(b'A')
+        if (handshake is False):
+            #rotina para handhsahe
+            print("esperando handhshake")
+            if (data_id == b'5'):
+                logging.debug("recebi handhsake")
+                self.ser.write(b'A')
+                logging.debug("Received INCOMING: {}".format(b'A'))
+                handshake = True
 
-        if(handshake):
+        if(handshake is True):
             if data_id == b'1':
                 if (data_status == b'1'): 
-                    logging.info("Sending press")
                     self.j.set_button(self.mapping.button['A'], 1)
 
                 elif data_status == b'0':
@@ -51,7 +55,6 @@ class SerialControllerInterface:
 
             if data_id == b'2':
                 if (data_status == b'1'): 
-                    logging.info("Sending press")
                     self.j.set_button(self.mapping.button['B'], 1)
 
                 elif data_status == b'0':
@@ -59,7 +62,6 @@ class SerialControllerInterface:
 
             if data_id == b'3':
                 if (data_status == b'1'): 
-                    logging.info("Sending press")
                     self.j.set_button(self.mapping.button['C'], 1)
 
                 elif data_status == b'0':
@@ -67,24 +69,19 @@ class SerialControllerInterface:
                     
             if data_id == b'4':
                 if (data_status == b'1'): 
-                    logging.info("Sending press")
                     self.j.set_button(self.mapping.button['D'], 1)
 
                 elif data_status == b'0':
                     self.j.set_button(self.mapping.button['D'], 0)
             else:
                 if(data_id == b'U'): #up
-                    logging.info("Sending press")
                     self.j.set_button(self.mapping.button['E'], 1)
                     #soltando
-                    logging.info("Sending press")
                     self.j.set_button(self.mapping.button['E'], 0)
 
                 if(data_id == b'D'): #down
-                    logging.info("Sending press")
                     self.j.set_button(self.mapping.button['F'], 1)
                     #soltando
-                    logging.info("Sending press")
                     self.j.set_button(self.mapping.button['F'], 0)
 
         self.incoming = self.ser.read()
