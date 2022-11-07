@@ -3,10 +3,11 @@ import argparse
 import time
 import logging
 import pyvjoy # Windows apenas
+handshake = False 
 
 class MyControllerMap:
     def __init__(self):
-        self.button = {'A': 1}
+        self.button = {'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E' : 5, 'F' : 6}
 
 
 class SerialControllerInterface:
@@ -23,18 +24,65 @@ class SerialControllerInterface:
 
     def update(self):
         ## Sync protocol
+        global handshake
         while self.incoming != b'X':
             self.incoming = self.ser.read()
             logging.debug("Received INCOMING: {}".format(self.incoming))
 
-        data = self.ser.read()
-        logging.debug("Received DATA: {}".format(data))
+        #para cada parte do struct enviado, deve-se fazer 1 read
+        data_id = self.ser.read()
+        data_status = self.ser.read()
+        logging.debug("Received DATA_ID: {}".format(data_id))
+        logging.debug("Received DATA_status: {}".format(data_status))
 
-        if data == b'1':
-            logging.info("Sending press")
-            self.j.set_button(self.mapping.button['A'], 1)
-        elif data == b'0':
-            self.j.set_button(self.mapping.button['A'], 0)
+
+        if (handshake is False):
+            #rotina para handhsahe
+            print("esperando handhshake")
+            if (data_id == b'5'):
+                logging.debug("recebi handhsake")
+                self.ser.write(b'A')
+                logging.debug("Received INCOMING: {}".format(b'A'))
+                handshake = True
+
+        if(handshake is True):
+            if data_id == b'1':
+                if (data_status == b'1'): 
+                    self.j.set_button(self.mapping.button['A'], 1)
+
+                elif data_status == b'0':
+                    self.j.set_button(self.mapping.button['A'], 0)
+
+            if data_id == b'2':
+                if (data_status == b'1'): 
+                    self.j.set_button(self.mapping.button['B'], 1)
+
+                elif data_status == b'0':
+                    self.j.set_button(self.mapping.button['B'], 0)
+
+            if data_id == b'3':
+                if (data_status == b'1'): 
+                    self.j.set_button(self.mapping.button['C'], 1)
+
+                elif data_status == b'0':
+                    self.j.set_button(self.mapping.button['C'], 0)
+                    
+            if data_id == b'4':
+                if (data_status == b'1'): 
+                    self.j.set_button(self.mapping.button['D'], 1)
+
+                elif data_status == b'0':
+                    self.j.set_button(self.mapping.button['D'], 0)
+            else:
+                if(data_id == b'U'): #up
+                    self.j.set_button(self.mapping.button['E'], 1)
+                    #soltando
+                    self.j.set_button(self.mapping.button['E'], 0)
+
+                if(data_id == b'D'): #down
+                    self.j.set_button(self.mapping.button['F'], 1)
+                    #soltando
+                    self.j.set_button(self.mapping.button['F'], 0)
 
         self.incoming = self.ser.read()
 
